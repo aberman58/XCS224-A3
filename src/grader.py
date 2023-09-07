@@ -61,7 +61,7 @@ class DummyModel(object):
     the sentence is "right", "left" if otherwise.
     """
 
-    def predict(self, partial_parses):
+    def predict(self, partial_parses, device):
         return [("RA" if pp.stack[1] == "right" else "LA") if len(pp.buffer) == 0 else "S"
                 for pp in partial_parses]
 
@@ -79,7 +79,7 @@ def test_minibatch_parse():
                  ["right", "arcs", "only", "again"],
                  ["left", "arcs", "only"],
                  ["left", "arcs", "only", "again"]]
-    deps = submission.minibatch_parse(sentences, DummyModel(), 2)
+    deps = submission.minibatch_parse(sentences, DummyModel(), torch.device("cpu"), 2)
     test_dependencies("minibatch_parse", deps[0],
                       (('ROOT', 'right'), ('arcs', 'only'), ('right', 'arcs')))
     test_dependencies("minibatch_parse", deps[1],
@@ -119,8 +119,8 @@ def hidden_test_parse(soln):
     return expected == student_result
 
 def hidden_test_minibatch_parse(sentences, batch_size, soln):
-    expected = soln.minibatch_parse(sentences, soln.parser_transitions.DummyModel(), batch_size)
-    actual = submission.minibatch_parse(sentences, submission.parser_transitions.DummyModel(), batch_size)
+    expected = soln.minibatch_parse(sentences, soln.parser_transitions.DummyModel(), torch.device("cpu"), batch_size)
+    actual = submission.minibatch_parse(sentences, submission.parser_transitions.DummyModel(), torch.device("cpu"), batch_size)
     return len(expected) == len(actual) and all(
         tuple(sorted(expected[i])) == tuple(sorted(actual[i])) for i in range(len(expected)))
 
@@ -193,7 +193,7 @@ def test_parser_and_train(parser, embeddings, train_data, dev_data, test_data):
         os.makedirs(output_dir)
     submission.train(parser, train_data, dev_data, output_path, batch_size=32, n_epochs=2, lr=0.0005)
     parser.model.eval()  # Places model in "eval" mode, i.e. don't apply dropout layer
-    UAS, _ = parser.parse(test_data)
+    UAS, _ = parser.parse(test_data, torch.device("cpu"))
     return UAS
 
 test_cases_ip = {
@@ -293,7 +293,7 @@ class Test_1b(GradedTestCase):
     """1b-3-hidden: same_lengths"""
     self.assertTrue(hidden_test_minibatch_parse(self.sentences_simple, 2, self.run_with_solution_if_possible(submission, lambda sub_or_sol:sub_or_sol)))
 
-  @graded(is_hidden=True)
+  @graded(timeout=-1, is_hidden=True)
   def test_4(self):
     """1b-4-hidden: different_lengths"""
     self.assertTrue(hidden_test_minibatch_parse(self.sentences, 2, self.run_with_solution_if_possible(submission, lambda sub_or_sol:sub_or_sol)))

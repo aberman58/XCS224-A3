@@ -19,7 +19,7 @@ from .parser_utils import minibatches, load_and_preprocess_data, AverageMeter
 # -----------------
 # Primary Functions
 # -----------------
-def train(parser, train_data, dev_data, output_path, batch_size=1024, n_epochs=10, lr=0.0005):
+def train(parser, train_data, dev_data, output_path, batch_size=1024, n_epochs=10, lr=0.0005, device=torch.device("cpu")):
     """ Train the neural dependency parser.
 
     @param parser (Parser): Neural Dependency Parser
@@ -40,7 +40,7 @@ def train(parser, train_data, dev_data, output_path, batch_size=1024, n_epochs=1
 
     for epoch in range(n_epochs):
         print("Epoch {:} out of {:}".format(epoch + 1, n_epochs))
-        dev_UAS = train_for_epoch(parser, train_data, dev_data, optimizer, loss_func, batch_size)
+        dev_UAS = train_for_epoch(parser, train_data, dev_data, optimizer, loss_func, batch_size, device)
         if dev_UAS > best_dev_UAS:
             best_dev_UAS = dev_UAS
             print("New best dev UAS! Saving model.")
@@ -51,7 +51,7 @@ def train(parser, train_data, dev_data, output_path, batch_size=1024, n_epochs=1
     return best_dev_UAS
 
 
-def train_for_epoch(parser, train_data, dev_data, optimizer, loss_func, batch_size):
+def train_for_epoch(parser, train_data, dev_data, optimizer, loss_func, batch_size, device):
     """ Train the neural dependency parser for single epoch.
 
     Note: In PyTorch we can signify train versus test and automatically have
@@ -65,6 +65,7 @@ def train_for_epoch(parser, train_data, dev_data, optimizer, loss_func, batch_si
     @param loss_func (nn.CrossEntropyLoss): Cross Entropy Loss Function
     @param batch_size (int): batch size
     @param lr (float): learning rate
+    @param device (torch.device): device to be used
 
     @return dev_UAS (float): Unlabeled Attachment Score (UAS) for dev data
     """
@@ -76,8 +77,8 @@ def train_for_epoch(parser, train_data, dev_data, optimizer, loss_func, batch_si
         for i, (train_x, train_y) in enumerate(minibatches(train_data, batch_size)):
             optimizer.zero_grad()  # remove any baggage in the optimizer
             loss = 0.  # store loss for this batch here
-            train_x = torch.from_numpy(train_x).long()
-            train_y = torch.from_numpy(train_y.nonzero()[1]).long()
+            train_x = torch.from_numpy(train_x).long().to(device=device)
+            train_y = torch.from_numpy(train_y.nonzero()[1]).long().to(device=device)
 
             ### TODO:
             ###      1) Run train_x forward through model to produce `logits`
@@ -98,6 +99,6 @@ def train_for_epoch(parser, train_data, dev_data, optimizer, loss_func, batch_si
 
     print("Evaluating on dev set",)
     parser.model.eval()  # Places model in "eval" mode, i.e. don't apply dropout layer
-    dev_UAS, _ = parser.parse(dev_data)
+    dev_UAS, _ = parser.parse(dev_data, device)
     print("- dev UAS: {:.2f}".format(dev_UAS * 100.0))
     return dev_UAS
