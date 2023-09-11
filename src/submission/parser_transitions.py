@@ -48,7 +48,7 @@ class PartialParse(object):
         return self.dependencies
 
 
-def minibatch_parse(sentences, model, batch_size):
+def minibatch_parse(sentences, model, device, batch_size):
     """Parses a list of sentences in minibatches using a model.
 
     Args:
@@ -58,6 +58,7 @@ def minibatch_parse(sentences, model, batch_size):
                returns a list of transitions predicted for each parse. That is, after calling
                    transitions = model.predict(partial_parses)
                transitions[i] will be the next transition to apply to partial_parses[i].
+        device: The device to be used
         batch_size: The number of PartialParses to include in each minibatch
     Returns:
         dependencies: A list where each element is the dependencies list for a parsed sentence.
@@ -121,7 +122,7 @@ class DummyModel(object):
     the sentence is "right", "left" if otherwise.
     """
 
-    def predict(self, partial_parses):
+    def predict(self, partial_parses, device):
         return [("RA" if pp.stack[1] == "right" else "LA") if len(pp.buffer) == 0 else "S"
                 for pp in partial_parses]
 
