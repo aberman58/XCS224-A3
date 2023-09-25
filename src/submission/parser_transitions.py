@@ -138,11 +138,12 @@ def test_minibatch_parse():
     """Simple tests for the minibatch_parse function
     Warning: these are not exhaustive
     """
+    device = 'cpu'
     sentences = [["right", "arcs", "only"],
                  ["right", "arcs", "only", "again"],
                  ["left", "arcs", "only"],
                  ["left", "arcs", "only", "again"]]
-    deps = minibatch_parse(sentences, DummyModel(), 2)
+    deps = minibatch_parse(sentences, DummyModel(), device, 2)
     test_dependencies("minibatch_parse", deps[0],
                       (('ROOT', 'right'), ('arcs', 'only'), ('right', 'arcs')))
     test_dependencies("minibatch_parse", deps[1],
