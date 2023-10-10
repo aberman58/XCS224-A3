@@ -21,12 +21,6 @@ class PartialParse(object):
         self.sentence = sentence
 
         ### START CODE HERE
-        self.stack = list()
-        self.buffer = list()
-        self.dependencies = list()
-        self.root= 'ROOT'
-        self.stack.append(self.root)
-        self.buffer += sentence
         ### END CODE HERE
 
     def parse_step(self, transition):
@@ -38,19 +32,6 @@ class PartialParse(object):
                         transition.
         """
         ### START CODE HERE
-        if transition == 'S':           #shift
-            item = self.buffer.pop(0)
-            self.stack.append(item)
-        elif transition == 'LA':        #Left Arc
-            top = self.stack[-1]
-            second = self.stack.pop(-2)
-            self.dependencies.append((top,second))
-        elif transition == 'RA':        #Right Arc
-            second = self.stack[-2]
-            top = self.stack.pop(-1)
-            self.dependencies.append((second,top))
-        
-             
         ### END CODE HERE
 
     def parse(self, transitions):
@@ -86,34 +67,6 @@ def minibatch_parse(sentences, model, device, batch_size):
     """
 
     ### START CODE HERE
-
-    partial_parses = list()
-    dependencies = list()
-
-    for sentence in sentences:
-        pp = PartialParse(sentence)
-        partial_parses.append(pp)
-
-    unfinished_parses = partial_parses.copy() 
-
-    while unfinished_parses:
-        n = min(batch_size, len(unfinished_parses))
-        minibatch = unfinished_parses[:n]
-        while minibatch:
-            transitions = model.predict(minibatch, device)
-            for indx, partial_parse in enumerate(minibatch):            
-                partial_parse.parse_step(transitions[indx])
-            for partial_parse in minibatch:
-                completed = len(partial_parse.stack) == 1 and len(partial_parse.buffer) == 0
-                if completed:
-                    dependencies.append(partial_parse.dependencies)
-                    minibatch.pop(0)
-                    unfinished_parses.pop(0)
-    return dependencies        
-
-
-        
-
     ### END CODE HERE
 
     return dependencies
