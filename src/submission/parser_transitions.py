@@ -26,7 +26,8 @@ class PartialParse(object):
         self.dependencies = list()
         self.root= 'ROOT'
         self.stack.append(self.root)
-        self.buffer += sentence
+        sent_x = sentence.copy()
+        self.buffer += sent_x
         ### END CODE HERE
 
     def parse_step(self, transition):
