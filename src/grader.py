@@ -286,8 +286,8 @@ class Test_1b(GradedTestCase):
   @graded(is_hidden=True)
   def test_2(self):
     """1b-2-hidden: batch_size = 1"""
-    self.assertTrue(hidden_test_minibatch_parse(self.sentences_simple, 1, self.run_with_solution_if_possible(submission, lambda sub_or_sol:sub_or_sol)))
-
+    self.assertTrue(hidden_test_minibatch_parse(self.sentences_simple, 1, self.run_with_solution_if_possible(submission, lambda sub_or_sol:sub_or_sol)))  
+    
   @graded(is_hidden=True)
   def test_3(self):
     """1b-3-hidden: same_lengths"""

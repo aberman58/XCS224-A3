@@ -25,9 +25,9 @@ class PartialParse(object):
         self.buffer = list()
         self.dependencies = list()
         self.root= 'ROOT'
-        self.stack.append(self.root)
-        sent_x = sentence.copy()
-        self.buffer += sent_x
+        self.stack.append(self.root)        
+        self.buffer += sentence.copy()
+        self.indx = None
         ### END CODE HERE
 
     def parse_step(self, transition):
@@ -85,36 +85,50 @@ def minibatch_parse(sentences, model, device, batch_size):
                       Ordering should be the same as in sentences (i.e., dependencies[i] should
                       contain the parse for sentences[i]).
     """
-
+    print(f'start mini_batch')
     ### START CODE HERE
+    partial_parses = []
+    dependencies = [None] * len(sentences)
 
-    partial_parses = list()
-    dependencies = list()
-
-    for sentence in sentences:
+    for indx, sentence in enumerate(sentences):
+#        print(f'sentence : {sentence}')
         pp = PartialParse(sentence)
+        pp.indx = indx
         partial_parses.append(pp)
 
     unfinished_parses = partial_parses.copy() 
-
+    
     while unfinished_parses:
+        
         n = min(batch_size, len(unfinished_parses))
         minibatch = unfinished_parses[:n]
-        while minibatch:
-            transitions = model.predict(minibatch, device)
-            for indx, partial_parse in enumerate(minibatch):            
-                partial_parse.parse_step(transitions[indx])
-            for partial_parse in minibatch:
-                completed = len(partial_parse.stack) == 1 and len(partial_parse.buffer) == 0
-                if completed:
-                    dependencies.append(partial_parse.dependencies)
-                    minibatch.pop(0)
-                    unfinished_parses.pop(0)
-    return dependencies        
-
-
+        continue_process = True
         
-
+        while continue_process:
+            
+            pps= []
+            for pp in minibatch:
+                completed = len(pp.stack) == 1 and len(pp.buffer) == 0
+                if not completed:
+                    pps.append(pp)
+            
+            if len(pps) > 0:
+                print(f'before transitions')
+                transitions = model.predict(pps, device)
+                print(f'after transitions')
+                for indx, transition in enumerate(transitions):
+                    pps[indx].parse_step(transition)
+                continue_process = True
+            else:
+                continue_process = False
+            
+            
+        for i in range(n):
+            pp = minibatch[i]
+            dependencies[pp.indx] = pp.dependencies
+            unfinished_parses.pop(0)
+    print(f'end mini_batch')                                                        
+    return dependencies        
     ### END CODE HERE
 
     return dependencies
